@@ -42,7 +42,7 @@ func FromFile(filepath string) (*Task, error) {
 
 func main() {
 	jsonEngineFilePtr := flag.String("f", "test.json", "JSON file")
-	jsonForwrdPtr := flag.String("forward", "forward.json", "")
+	jsonForwardPtr := flag.String("forward", "forward.json", "")
 	jsonBackwardPtr := flag.String("backward", "backward.json", "")
 
 	flag.Parse()
@@ -53,7 +53,7 @@ func main() {
 		return
 	}
 
-	forwardTask, err := FromFile(*jsonForwrdPtr)
+	forwardTask, err := FromFile(*jsonForwardPtr)
 	if err != nil {
 		fmt.Println(fmt.Sprintf("Error: %v", err))
 		return

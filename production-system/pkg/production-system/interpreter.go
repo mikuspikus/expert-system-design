@@ -19,7 +19,7 @@ type Fact struct {
 	SemanticValue string `json:"semantic_value"`
 }
 
-type Engine struct {
+type Interpreter struct {
 	Facts map[string]*Fact `json:"facts"`
 	Rules []*Rule          `json:"rules"`
 }
@@ -30,7 +30,7 @@ type JSONRule struct {
 	Derivation   string   `json:"derivation"`
 }
 
-type JSONEngine struct {
+type JSONInterpreter struct {
 	Facts []*Fact     `json:"facts"`
 	Rules []*JSONRule `json:"rules"`
 }
@@ -45,8 +45,8 @@ func in(facts []*Fact, fact *Fact) bool {
 	return false
 }
 
-func _fromJSONEngine(jsonEngine *JSONEngine) (*Engine, error) {
-	engine := new(Engine)
+func _fromJSONEngine(jsonEngine *JSONInterpreter) (*Interpreter, error) {
+	engine := new(Interpreter)
 	engine.Facts = make(map[string]*Fact, 0)
 	engine.Rules = make([]*Rule, 0)
 
@@ -89,7 +89,7 @@ func _fromJSONEngine(jsonEngine *JSONEngine) (*Engine, error) {
 	return engine, nil
 }
 
-func FromFile(filepath string) (*Engine, error) {
+func FromFile(filepath string) (*Interpreter, error) {
 	jsonFile, err := os.Open(filepath)
 	if err != nil {
 		return nil, err
@@ -101,10 +101,8 @@ func FromFile(filepath string) (*Engine, error) {
 		return nil, err
 	}
 
-	var jsonEngine JSONEngine
+	var jsonEngine JSONInterpreter
 	err = json.Unmarshal(jsonBytes, &jsonEngine)
-	//fmt.Println(fmt.Sprintf("jsonEngine: %+v", jsonFile))
-	//fmt.Println(fmt.Sprintf("err: %+v", err))
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +110,7 @@ func FromFile(filepath string) (*Engine, error) {
 	return _fromJSONEngine(&jsonEngine)
 }
 
-func (e *Engine) forward(trueFacts []*Fact, query *Fact) (bool, []*Rule) {
+func (e *Interpreter) forward(trueFacts []*Fact, query *Fact) (bool, []*Rule) {
 	usedRules := make([]*Rule, 0)
 	for {
 		resultFacts := make([]*Fact, 0)
@@ -150,7 +148,7 @@ func (e *Engine) forward(trueFacts []*Fact, query *Fact) (bool, []*Rule) {
 	}
 }
 
-func (e *Engine) _isDerivable(trueFacts []*Fact, fact *Fact, usedRules []*Rule) bool {
+func (e *Interpreter) _isDerivable(trueFacts []*Fact, fact *Fact, usedRules []*Rule) bool {
 	if in(trueFacts, fact) {
 		return true
 	}
@@ -180,14 +178,14 @@ func (e *Engine) _isDerivable(trueFacts []*Fact, fact *Fact, usedRules []*Rule) 
 	return false
 }
 
-func (e *Engine) backward(trueFacts []*Fact, query *Fact) (bool, []*Rule) {
+func (e *Interpreter) backward(trueFacts []*Fact, query *Fact) (bool, []*Rule) {
 	usedRules := make([]*Rule, 0)
 	isDerived := e._isDerivable(trueFacts, query, usedRules)
 
 	return isDerived, usedRules
 }
 
-func (e *Engine) _convertNames(trueFactNames []string, queryName string) ([]*Fact, *Fact, error) {
+func (e *Interpreter) _convertNames(trueFactNames []string, queryName string) ([]*Fact, *Fact, error) {
 	trueFacts := make([]*Fact, 0)
 
 	for _, trFactName := range trueFactNames {
@@ -207,7 +205,7 @@ func (e *Engine) _convertNames(trueFactNames []string, queryName string) ([]*Fac
 	return trueFacts, queryFact, nil
 }
 
-func (e *Engine) Forward(trueFactNames []string, queryName string) (bool, []string, error) {
+func (e *Interpreter) Forward(trueFactNames []string, queryName string) (bool, []string, error) {
 	trueFacts, queryFact, err := e._convertNames(trueFactNames, queryName)
 	if err != nil {
 		return false, nil, err
@@ -223,7 +221,7 @@ func (e *Engine) Forward(trueFactNames []string, queryName string) (bool, []stri
 	return isDerived, usedRulesNames, nil
 }
 
-func (e *Engine) Backward(trueFactNames []string, queryName string) (bool, []*Rule, error) {
+func (e *Interpreter) Backward(trueFactNames []string, queryName string) (bool, []*Rule, error) {
 	trueFacts, queryFact, err := e._convertNames(trueFactNames, queryName)
 	if err != nil {
 		return false, nil, err
