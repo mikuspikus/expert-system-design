@@ -1,0 +1,69 @@
+{
+  "facts": [
+    {
+      "name": "f1",
+      "semantic_value": "female"
+    },
+    {
+      "name": "f2",
+      "semantic_value": "male"
+    },
+    {
+      "name": "f3",
+      "semantic_value": "policeman"
+    },
+    {
+      "name": "f4",
+      "semantic_value": "wears hat"
+    },
+    {
+      "name": "f5",
+      "semantic_value": "old"
+    },
+    {
+      "name": "f6",
+      "semantic_value": "Bill"
+    },
+    {
+      "name": "f7",
+      "semantic_value": "Mary Jane"
+    },
+    {
+      "name": "f8",
+      "semantic_value": "young"
+    },
+    {
+      "name": "f9",
+      "semantic_value": "wears beard"
+    },
+    {
+      "name": "f10",
+      "semantic_value": "romantic"
+    },
+    {
+      "name": "f11",
+      "semantic_value": "John"
+    },
+    {
+      "name": "f12",
+      "semantic_value": "William"
+    }
+  ],
+  "rules": [
+    {
+      "name": "r1",
+      "conditionals": ["f2","f4","f5"],
+      "derivation": "f6"
+    },
+    {
+      "name": "r2",
+      "conditionals": ["f8", "f9"],
+      "derivation": "f11"
+    },
+    {
+      "name": "r3",
+      "conditionals": ["f1", "f10"],
+      "derivation": "f7"
+    }
+  ]
+}

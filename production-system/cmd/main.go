@@ -37,7 +37,7 @@ func (trFacts *trueFacts) Set(value string) error {
 
 func main() {
 	var trueFacts trueFacts
-	jsonFilePtr := flag.String("file", "engine-data.json", "JSON file")
+	jsonFilePtr := flag.String("file", "test.json", "JSON file")
 	flag.Var(&trueFacts, "facts", "A slice of facts names considered to be true")
 	query := flag.String("query", "f1", "Fact that considered to be the query for the system")
 	flag.Parse()
