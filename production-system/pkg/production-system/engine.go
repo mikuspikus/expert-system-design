@@ -47,6 +47,8 @@ func in(facts []*Fact, fact *Fact) bool {
 
 func _fromJSONEngine(jsonEngine *JSONEngine) (*Engine, error) {
 	engine := new(Engine)
+	engine.Facts = make(map[string]*Fact, 0)
+	engine.Rules = make([]*Rule, 0)
 
 	for _, fact := range jsonEngine.Facts {
 		if _, known := engine.Facts[fact.Name]; known {
@@ -101,6 +103,8 @@ func FromFile(filepath string) (*Engine, error) {
 
 	var jsonEngine JSONEngine
 	err = json.Unmarshal(jsonBytes, &jsonEngine)
+	fmt.Printf("jsonEngine: %+v", jsonFile)
+	fmt.Printf("err: %+v", err)
 	if err != nil {
 		return nil, err
 	}
