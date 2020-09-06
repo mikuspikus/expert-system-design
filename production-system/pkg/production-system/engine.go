@@ -103,8 +103,8 @@ func FromFile(filepath string) (*Engine, error) {
 
 	var jsonEngine JSONEngine
 	err = json.Unmarshal(jsonBytes, &jsonEngine)
-	fmt.Printf("jsonEngine: %+v", jsonFile)
-	fmt.Printf("err: %+v", err)
+	//fmt.Println(fmt.Sprintf("jsonEngine: %+v", jsonFile))
+	//fmt.Println(fmt.Sprintf("err: %+v", err))
 	if err != nil {
 		return nil, err
 	}
@@ -113,9 +113,9 @@ func FromFile(filepath string) (*Engine, error) {
 }
 
 func (e *Engine) forward(trueFacts []*Fact, query *Fact) (bool, []*Rule) {
+	usedRules := make([]*Rule, 0)
 	for {
 		resultFacts := make([]*Fact, 0)
-		usedRules := make([]*Rule, 0)
 
 		for _, rule := range e.Rules {
 			matches := 0
@@ -134,17 +134,14 @@ func (e *Engine) forward(trueFacts []*Fact, query *Fact) (bool, []*Rule) {
 			}
 
 			if matches == len(rule.Conditionals) && derived {
-				updated := append(resultFacts, rule.Derivation)
-				resultFacts = updated
+				resultFacts = append(resultFacts, rule.Derivation)
 
-				up := append(usedRules, rule)
-				usedRules = up
+				usedRules = append(usedRules, rule)
 			}
 		}
 
 		for _, resultFact := range resultFacts {
-			updated := append(trueFacts, resultFact)
-			trueFacts = updated
+			trueFacts = append(trueFacts, resultFact)
 		}
 
 		if len(resultFacts) == 0 {

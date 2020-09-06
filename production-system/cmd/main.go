@@ -1,58 +1,83 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
+	"io/ioutil"
+	"os"
 	production_system "production-system/pkg/production-system"
-	"strings"
 )
 
 var (
 	errFileNotFound = errors.New("file not found")
 )
 
-// A slice of facts names considered to be true
-type trueFacts []string
-
-func (trFacts *trueFacts) String() string {
-	var strBuilder strings.Builder
-	for _, trFact := range *trFacts {
-		strBuilder.WriteString(trFact)
-	}
-	return strBuilder.String()
+type Task struct {
+	TrueFacts []string `json:"true_facts"`
+	Query     string   `json:"query"`
 }
 
-func (trFacts *trueFacts) Set(value string) error {
-	if len(*trFacts) > 0 {
-		return errors.New("true facts flag already have been set")
+func FromFile(filepath string) (*Task, error) {
+	jsonFile, err := os.Open(filepath)
+	if err != nil {
+		return nil, err
 	}
 
-	for _, fact := range strings.Split(value, ",") {
-		*trFacts = append(*trFacts, fact)
+	defer jsonFile.Close()
+	jsonBytes, err := ioutil.ReadAll(jsonFile)
+	if err != nil {
+		return nil, err
+	}
+	task := new(Task)
+	err = json.Unmarshal(jsonBytes, &task)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil
+	return task, nil
+
 }
 
 func main() {
-	var trueFacts trueFacts
-	jsonFilePtr := flag.String("file", "test.json", "JSON file")
-	flag.Var(&trueFacts, "facts", "A slice of facts names considered to be true")
-	query := flag.String("query", "f1", "Fact that considered to be the query for the system")
+	jsonEngineFilePtr := flag.String("f", "test.json", "JSON file")
+	jsonForwrdPtr := flag.String("forward", "forward.json", "")
+	jsonBackwardPtr := flag.String("backward", "backward.json", "")
+
 	flag.Parse()
 
-	engine, err := production_system.FromFile(*jsonFilePtr)
+	engine, err := production_system.FromFile(*jsonEngineFilePtr)
 	if err != nil {
 		fmt.Println(fmt.Sprintf("Error: %v", err))
 		return
 	}
 
-	isDerived, usedRulesNames, err := engine.Forward(trueFacts, *query)
+	forwardTask, err := FromFile(*jsonForwrdPtr)
 	if err != nil {
 		fmt.Println(fmt.Sprintf("Error: %v", err))
 		return
 	}
 
-	fmt.Printf("Is derived: %v, used rules: %v", isDerived, usedRulesNames)
+	isDerived, usedRulesNames, err := engine.Forward(forwardTask.TrueFacts, forwardTask.Query)
+	if err != nil {
+		fmt.Println(fmt.Sprintf("Error: %v", err))
+		return
+	}
+
+	fmt.Println(fmt.Sprintf("[forward] :: Is derived: %v, used rules: %v", isDerived, usedRulesNames))
+
+	backwardTask, err := FromFile(*jsonBackwardPtr)
+	if err != nil {
+		fmt.Println(fmt.Sprintf("Error: %v", err))
+		return
+	}
+
+	isDerived, usedRulesNames, err = engine.Forward(backwardTask.TrueFacts, backwardTask.Query)
+	if err != nil {
+		fmt.Println(fmt.Sprintf("Error: %v", err))
+		return
+	}
+
+	fmt.Println(fmt.Sprintf("[backward] :: Is derived: %v, used rules: %v", isDerived, usedRulesNames))
 }
