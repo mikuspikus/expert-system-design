@@ -41,10 +41,9 @@ func FromFile(filepath string) (*Task, error) {
 }
 
 func main() {
-	jsonEngineFilePtr := flag.String("f", "test.json", "JSON file")
-	jsonForwardPtr := flag.String("forward", "forward.json", "")
-	jsonBackwardPtr := flag.String("backward", "backward.json", "")
-
+	jsonEngineFilePtr := flag.String("setup", "test.json", "JSON file with Interpreter setup")
+	jsonForwardPtr := flag.String("fwd", "forward.json", "JSON file with forward task for Interpreter")
+	jsonBackwardPtr := flag.String("bwd", "backward.json", "JSON file with backward task for Interpreter")
 	flag.Parse()
 
 	engine, err := production_system.FromFile(*jsonEngineFilePtr)

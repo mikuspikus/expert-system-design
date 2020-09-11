@@ -69,8 +69,7 @@ func _fromJSONEngine(jsonEngine *JSONInterpreter) (*Interpreter, error) {
 			if _, exists := engine.Facts[conditional]; !exists {
 				return nil, errors.New(fmt.Sprintf("Unknown fact name %v in rule %v", conditional, jrule))
 			}
-			updated := append(conditionals, engine.Facts[conditional])
-			conditionals = updated
+			conditionals = append(conditionals, engine.Facts[conditional])
 		}
 
 		if _, exists := engine.Facts[jrule.Derivation]; !exists {
@@ -133,7 +132,6 @@ func (e *Interpreter) forward(trueFacts []*Fact, query *Fact) (bool, []*Rule) {
 
 			if matches == len(rule.Conditionals) && derived {
 				resultFacts = append(resultFacts, rule.Derivation)
-
 				usedRules = append(usedRules, rule)
 			}
 		}
@@ -164,12 +162,8 @@ func (e *Interpreter) _isDerivable(trueFacts []*Fact, fact *Fact, usedRules []*R
 			}
 
 			if derivableCount == len(rule.Conditionals) {
-				updated := append(usedRules, rule)
-				usedRules = updated
-
-				up := append(trueFacts, rule.Derivation)
-				trueFacts = up
-
+				usedRules = append(usedRules, rule)
+				trueFacts = append(trueFacts, rule.Derivation)
 				return true
 			}
 		}
