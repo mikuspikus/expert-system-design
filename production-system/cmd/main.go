@@ -42,7 +42,7 @@ func FromFile(filepath string) (*Task, error) {
 
 func main() {
 	jsonEngineFilePtr := flag.String("setup", "test.json", "JSON file with Interpreter setup")
-	jsonForwardPtr := flag.String("fwd", "forward.json", "JSON file with forward task for Interpreter")
+	//jsonForwardPtr := flag.String("fwd", "forward.json", "JSON file with forward task for Interpreter")
 	jsonBackwardPtr := flag.String("bwd", "backward.json", "JSON file with backward task for Interpreter")
 	flag.Parse()
 
@@ -52,19 +52,19 @@ func main() {
 		return
 	}
 
-	forwardTask, err := FromFile(*jsonForwardPtr)
-	if err != nil {
-		fmt.Println(fmt.Sprintf("Error: %v", err))
-		return
-	}
-
-	isDerived, usedRulesNames, err := engine.Forward(forwardTask.TrueFacts, forwardTask.Query)
-	if err != nil {
-		fmt.Println(fmt.Sprintf("Error: %v", err))
-		return
-	}
-
-	fmt.Println(fmt.Sprintf("[forward] :: Is derived: %v, used rules: %v", isDerived, usedRulesNames))
+	//forwardTask, err := FromFile(*jsonForwardPtr)
+	//if err != nil {
+	//	fmt.Println(fmt.Sprintf("Error: %v", err))
+	//	return
+	//}
+	//
+	//isDerived, usedRulesNames, err := engine.Forward(forwardTask.TrueFacts, forwardTask.Query)
+	//if err != nil {
+	//	fmt.Println(fmt.Sprintf("Error: %v", err))
+	//	return
+	//}
+	//
+	//fmt.Println(fmt.Sprintf("[forward] :: Is derived: %v, used rules: %v", isDerived, usedRulesNames))
 
 	backwardTask, err := FromFile(*jsonBackwardPtr)
 	if err != nil {
@@ -72,7 +72,7 @@ func main() {
 		return
 	}
 
-	isDerived, usedRulesNames, err = engine.Forward(backwardTask.TrueFacts, backwardTask.Query)
+	isDerived, usedRulesNames, err := engine.Forward(backwardTask.TrueFacts, backwardTask.Query)
 	if err != nil {
 		fmt.Println(fmt.Sprintf("Error: %v", err))
 		return
