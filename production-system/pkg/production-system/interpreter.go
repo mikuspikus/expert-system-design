@@ -1,5 +1,6 @@
 package production_system
 
+// используемые пакеты
 import (
 	"encoding/json"
 	"errors"
@@ -7,6 +8,23 @@ import (
 	"io/ioutil"
 	"os"
 )
+
+// Задача:
+// Написать продукционную систему, которая по заданным фактам и цели реализует вывод от цели и от данных
+// Сама система получает исходные данные (список фактов и правил), а также задания для вывода
+// (список имен истинных фактов имя факта-цели) из отдельных файлов формата .json
+
+// При выводе от данных в цикле просматриваются все правила и выбираются те, все факты-входы которых
+// полностью содеражтся в массиве истинных фактов. Факты-выход этих правил добавляется в массив истинных фактов.
+// Цикл продолжается до тех пор, пока изменяется массив истинных фактов (добавляются новые факты-выходы).
+// Если изменений не было, то определяется истинность факта-цели.
+// Она определяется как этого факта-цели в массиве истинных фактов.
+
+// При выводе от данных задача разбивается на подзадачи с помощью рекурсии:
+// 	если подцель есть в списке истинных фактов, то нужно вернуть истину,
+//	иначе для текущей подцели ищутся все правила из массива, факты-выходы которых совпадают с подцелью.
+//	Факты-входы проверяются на наличие в массиве истинных фактов или выводимость (заход в рекурсию), если они выводимы,
+//	то факт-выход добавляется в массив истинных фактов и просиходит выход из рекурсии.
 
 // Rule является представлением правила
 type Rule struct {
@@ -29,7 +47,7 @@ type Interpreter struct {
 	Rules []*Rule `json:"rules"`
 }
 
-// Вспомогательный классы для сериализации
+// Вспомогательные классы для сериализации
 type JSONRule struct {
 	Name         string   `json:"name"`
 	Conditionals []string `json:"conditionals"`
@@ -124,7 +142,7 @@ func (e *Interpreter) forward(trueFacts []*Fact, query *Fact) (bool, []*Rule) {
 	usedRules := make([]*Rule, 0)
 	// бесконечный цикл
 	for {
-		// срез фактов
+		// срез новых истинных фактов
 		resultFacts := make([]*Fact, 0)
 		// перебираем все правила
 		for _, rule := range e.Rules {
@@ -136,7 +154,7 @@ func (e *Interpreter) forward(trueFacts []*Fact, query *Fact) (bool, []*Rule) {
 				if rule.Derivation == trFact {
 					derived = false
 				} else {
-					// иначе проверяем, что условия правила находятся в списке истинных
+					// иначе проверяем, что факты-условия правила находятся в списке истинных фактов
 					for _, conditional := range rule.Conditionals {
 						if conditional == trFact {
 							matches++
@@ -145,7 +163,7 @@ func (e *Interpreter) forward(trueFacts []*Fact, query *Fact) (bool, []*Rule) {
 				}
 			}
 			// если правило доказуемо
-			if matches == len(rule.Conditionals) && derived {
+			if derived && matches == len(rule.Conditionals) {
 				// обновляем срезы с данными
 				resultFacts = append(resultFacts, rule.Derivation)
 				usedRules = append(usedRules, rule)
@@ -155,7 +173,7 @@ func (e *Interpreter) forward(trueFacts []*Fact, query *Fact) (bool, []*Rule) {
 		for _, resultFact := range resultFacts {
 			trueFacts = append(trueFacts, resultFact)
 		}
-		// елси не получили новых данных (перебрали все возможные варианты)
+		// если не получили новых данных (перебрали все возможные варианты)
 		if len(resultFacts) == 0 {
 			// проверяем, находится ли цель в срезе с истинными фактами
 			return in(trueFacts, query), usedRules
@@ -172,12 +190,12 @@ func (e *Interpreter) _isDerivable(trueFacts []*Fact, fact *Fact, usedRules []*R
 
 	// проверяем подцель на выводимость через правила
 	for _, rule := range e.Rules {
-		// вывод правила совпадает с подцелью
+		// вывод правила совпадает с текущей подцелью
 		if rule.Derivation == fact {
 			// счетчик истинных фактов-условий
 			derivableCount := 0
 
-			// проверяем на истинность или выводимость каждый факт-условие их этого правила
+			// проверяем на истинность или выводимость каждый факт-условие из этого правила
 			for _, conditional := range rule.Conditionals {
 				if in(trueFacts, conditional) && e._isDerivable(trueFacts, conditional, usedRules) {
 					derivableCount++
@@ -231,19 +249,24 @@ func (e *Interpreter) _convertNames(trueFactNames []string, queryName string) ([
 	return trueFacts, queryFact, nil
 }
 
-// Forward проверяет выводимость от данных
-func (e *Interpreter) Forward(trueFactNames []string, queryName string) (bool, []*Rule, error) {
+// Forward проверяет цели с именем queryName и исходными данными trueFactNames через выводимость от данных
+func (e *Interpreter) Forward(trueFactNames []string, queryName string) (bool, []string, error) {
 	trueFacts, queryFact, err := e._convertNames(trueFactNames, queryName)
 	if err != nil {
 		return false, nil, err
 	}
 	isDerived, usedRules := e.forward(trueFacts, queryFact)
+	// срез с именами использованных правил
+	usedRulesNames := make([]string, 0)
+	for _, rule := range usedRules {
+		usedRulesNames = append(usedRulesNames, rule.Name)
+	}
 
-	return isDerived, usedRules, nil
+	return isDerived, usedRulesNames, nil
 }
 
-// Backward проверяет выводимость от цели
-func (e *Interpreter) Backward(trueFactNames []string, queryName string) (bool, []*Rule, error) {
+// Backward проверяет с именем queryName и исходными данными trueFactNames выводимость от цели
+func (e *Interpreter) Backward(trueFactNames []string, queryName string) (bool, []string, error) {
 	// переводим строки с именами фактов в объекты
 	trueFacts, queryFact, err := e._convertNames(trueFactNames, queryName)
 	// возвращаем ошибку при переводе
@@ -252,5 +275,11 @@ func (e *Interpreter) Backward(trueFactNames []string, queryName string) (bool, 
 	}
 	// вызываем метод вывода
 	isDerived, usedRules := e.backward(trueFacts, queryFact)
-	return isDerived, usedRules, nil
+	// срез имен использованных правил
+	usedRulesNames := make([]string, 0)
+	for _, rule := range usedRules {
+		usedRulesNames = append(usedRulesNames, rule.Name)
+	}
+
+	return isDerived, usedRulesNames, nil
 }
